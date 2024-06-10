@@ -146,10 +146,6 @@ function loadFile(event) {
     const sceneJSON = JSON.parse(contents);
     const loader = new THREE.ObjectLoader();
     const loadedScene = loader.parse(sceneJSON);
-    // console.log(loadedScene);
-    // while (scene.children.length) {
-    //   scene.remove(scene.children[0]);
-    // }
 
     scene.add(...loadedScene.children);
     animate();
