@@ -36,8 +36,30 @@ function clearPlanes() {
     }
   });
 
+  while (scene.children.length) {
+    const child = scene.children[0];
+    scene.remove(child);
+
+    // Check if the child has material(s) and dispose of it/them
+    if (child.material) {
+      if (Array.isArray(child.material)) {
+        child.material.forEach((material) => {
+          material.dispose();
+        });
+      } else {
+        child.material.dispose();
+      }
+    }
+
+    // If the child has a texture, dispose of it
+    if (child.texture) child.texture.dispose();
+  }
+
+  scene.add(lightHelper, gridHelper);
+
   drawedPlanes.length = 0;
   points = [];
+  document.getElementById("file-input").value = "";
 }
 
 function drawPlane() {
@@ -63,7 +85,7 @@ function drawPlane() {
       //   const edges3 = new THREE.EdgesGeometry(geometry);
       const material = new THREE.MeshBasicMaterial({
         transparent: true,
-        opacity: 0.5,
+        opacity: 0.3,
       });
       const mesh = new THREE.Mesh(geometry, material);
       //   const line3 = new THREE.LineSegments(
