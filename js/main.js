@@ -239,6 +239,15 @@ const snapToRack = function (event) {
   });
 };
 
+var mouse = new THREE.Vector2();
+document.addEventListener("mousemove", onMouseMove, false);
+function onMouseMove(event) {
+  mouse.x = event.clientX;
+  mouse.y = event.clientY;
+  tooltip.style.left = mouse.x + 10 + "px"; // Thêm một chút offset
+  tooltip.style.top = mouse.y + 10 + "px";
+}
+
 const displayBox = function (event) {
   const box = new THREE.BoxHelper(event.object, 0xffff00);
   scene.add(box);
