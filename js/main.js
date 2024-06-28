@@ -67,7 +67,7 @@ function clearPlanes() {
     scene.remove(rack);
     // rack = null;
   }
-  console.log(scene);
+
   tmpPositionX = -100;
   // tmpPositionZ = -10;
   scene.add(lightHelper, gridHelper);
@@ -219,15 +219,15 @@ let dragControls = new DragControls(
   renderer.domElement
 );
 
-const enableOrbitControls = function () {
+function enableOrbitControls() {
   orbitControls.enabled = true;
-};
+}
 
-const disableOrbitControls = function () {
+function disableOrbitControls() {
   orbitControls.enabled = false;
-};
+}
 
-const snapToRack = function (event) {
+function snapToRack(event) {
   snapPostions.forEach((target) => {
     if (event.object.position.distanceTo(target) < 13) {
       event.object.position.copy(target);
@@ -237,31 +237,77 @@ const snapToRack = function (event) {
       // }
     }
   });
-};
+  tooltip.style.display = "none";
+}
 
-var mouse = new THREE.Vector2();
-document.addEventListener("mousemove", onMouseMove, false);
+const mouse = new THREE.Vector2();
+const raycaster = new THREE.Raycaster();
+let selectedU = null;
+let selectedUList = [];
+renderer.domElement.addEventListener("mousemove", onMouseMove, false);
+function animatePosition(object, startZ, endZ, duration) {
+  const startTime = performance.now();
+
+  function update() {
+    const currentTime = performance.now();
+    const elapsedTime = currentTime - startTime;
+    const progress = Math.min(elapsedTime / duration, 1);
+
+    // Sử dụng hàm easing để làm cho chuyển động mượt mà hơn
+    const easeProgress = easeOutQuad(progress);
+
+    object.position.z = startZ + (endZ - startZ) * easeProgress;
+
+    if (progress < 1) {
+      requestAnimationFrame(update);
+    }
+  }
+
+  update();
+}
+
+// Hàm easing để làm cho chuyển động tự nhiên hơn
+function easeOutQuad(t) {
+  return t * (2 - t);
+}
+
+renderer.domElement.addEventListener("dblclick", (event) => {
+  if (selectedU) {
+    const startZ = selectedU.position.z;
+    const endZ = !selectedUList.includes(selectedU) ? startZ + 30 : startZ - 30;
+
+    animatePosition(selectedU, startZ, endZ, 500); // 500ms là thời gian animation
+
+    if (!selectedUList.includes(selectedU)) {
+      selectedUList.push(selectedU);
+    } else {
+      selectedUList = selectedUList.filter((item) => item !== selectedU);
+    }
+  }
+});
 function onMouseMove(event) {
   mouse.x = event.clientX;
   mouse.y = event.clientY;
-  tooltip.style.left = mouse.x + 10 + "px"; // Thêm một chút offset
-  tooltip.style.top = mouse.y + 10 + "px";
+  tooltip.style.left = mouse.x + 20 + "px"; // Thêm một chút offset
+  tooltip.style.top = mouse.y + 20 + "px";
 }
 
-const displayBox = function (event) {
-  const box = new THREE.BoxHelper(event.object, 0xffff00);
+function displayBox(event) {
+  const box = new THREE.BoxHelper(event.object, 0x0099ff);
   scene.add(box);
 
   const info = getObjectInfo(event.object);
   tooltip.innerHTML = info;
   // Hiển thị tooltip
   tooltip.style.display = "block";
-};
+  selectedU = event.object;
+}
 
-const hideBox = function (event) {
+function hideBox(event) {
   scene.remove(scene.children[scene.children.length - 1]);
   tooltip.style.display = "none";
-};
+  selectedU = null;
+}
 
 function getObjectInfo(object) {
   // Hàm này trả về thông tin bạn muốn hiển thị trong tooltip
@@ -314,16 +360,16 @@ scene.background = spaceTexture;
 
 function animate() {
   requestAnimationFrame(animate);
-  for (const rack of racks) {
-    rack.children.forEach((child) => {
-      if (child.name.includes("serverU")) {
-        child.position.clamp(
-          new THREE.Vector3(-1000, 0, 0),
-          new THREE.Vector3(1000, 1000, 0)
-        );
-      }
-    });
-  }
+  // for (const rack of racks) {
+  //   rack.children.forEach((child) => {
+  //     if (child.name.includes("serverU")) {
+  //       child.position.clamp(
+  //         new THREE.Vector3(-1000, 0, 0),
+  //         new THREE.Vector3(1000, 1000, 0)
+  //       );
+  //     }
+  //   });
+  // }
   renderer.render(scene, camera);
 }
 
