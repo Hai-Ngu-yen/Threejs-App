@@ -1,10 +1,10 @@
-import "../css/style.css";
-import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { DragControls } from "three/examples/jsm/controls/DragControls.js";
-import { TransformControls } from "three/examples/jsm/controls/TransformControls.js";
+import '../css/style.css';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { DragControls } from 'three/examples/jsm/controls/DragControls.js';
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 // import Paint from "./paint.js";
-import Rack from "./Rack.js";
+import Rack from './Rack.js';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -14,19 +14,21 @@ const camera = new THREE.PerspectiveCamera(
   10000
 );
 const renderer = new THREE.WebGLRenderer({
-  canvas: document.querySelector("#bg"),
+  canvas: document.querySelector('#bg'),
 });
 const orbitControls = new OrbitControls(camera, renderer.domElement);
-const endButton = document.getElementById("endButton");
-const clearButton = document.getElementById("clearButton");
-const moveButton = document.getElementById("moveButton");
-const addButton = document.getElementById("addButton");
-const tooltip = document.getElementById("tooltip");
+const endButton = document.getElementById('endButton');
+const clearButton = document.getElementById('clearButton');
+const moveButton = document.getElementById('moveButton');
+const addButton = document.getElementById('addButton');
+const tooltip = document.getElementById('tooltip');
+const deleteButton = document.getElementById('deleteButton');
 
-clearButton.addEventListener("click", clearPlanes);
+clearButton.addEventListener('click', clearPlanes);
 // endButton.addEventListener("click", drawPlane);
 // moveButton.addEventListener("click", moveObjects);
-addButton.addEventListener("click", addRacks);
+addButton.addEventListener('click', addRacks);
+deleteButton.addEventListener('click', deleteServerU);
 
 let movable = false;
 let drawedPlanes = [];
@@ -84,11 +86,11 @@ function clearPlanes() {
     renderer.domElement
   );
   snapPostions = [];
-  dragControls.addEventListener("dragstart", disableOrbitControls);
-  dragControls.addEventListener("dragend", enableOrbitControls);
-  dragControls.addEventListener("drag", snapToRack);
-  dragControls.addEventListener("hoveron", displayBox);
-  dragControls.addEventListener("hoveroff", hideBox);
+  dragControls.addEventListener('dragstart', disableOrbitControls);
+  dragControls.addEventListener('dragend', enableOrbitControls);
+  dragControls.addEventListener('drag', snapToRack);
+  dragControls.addEventListener('hoveron', displayBox);
+  dragControls.addEventListener('hoveroff', hideBox);
 }
 
 // function drawPlane() {
@@ -141,14 +143,14 @@ let racks = [];
 let snapPostions = [];
 function addRacks() {
   const rackMesh = new Rack(
-    document.getElementById("length").value,
-    document.getElementById("width").value,
-    document.getElementById("number").value
+    document.getElementById('length').value,
+    document.getElementById('width').value,
+    document.getElementById('number').value
   );
   const rackTmp = rackMesh.createRack();
   rackTmp.position.x = tmpPositionX;
   // rackTmp.position.z = tmpPositionZ;
-  tmpPositionX -= document.getElementById("length").value * 2;
+  tmpPositionX -= document.getElementById('length').value * 2;
   // tmpPositionZ -= document.getElementById("width").value;
   scene.add(rackTmp);
   racks.push(rackTmp);
@@ -156,7 +158,7 @@ function addRacks() {
 
   for (let i = 0; i < rackTmp.children.length; i++) {
     const p = rackTmp.children[i];
-    if (p.name.includes("serverU")) {
+    if (p.name.includes('serverU')) {
       snapPostions.push(
         new THREE.Vector3(p.position.x, p.position.y, p.position.z)
       );
@@ -213,6 +215,17 @@ function addRacks() {
 
 //   return false;
 // }
+function deleteServerU() {
+  const serverUName = document.getElementById('delete').value;
+  for (const rack of racks) {
+    const servers = rack.children;
+    for (const server of servers) {
+      if (server.name == serverUName) {
+        rack.remove(server);
+      }
+    }
+  }
+}
 let dragControls = new DragControls(
   draggableServerU,
   camera,
@@ -237,14 +250,15 @@ function snapToRack(event) {
       // }
     }
   });
-  tooltip.style.display = "none";
+  tooltip.style.display = 'none';
 }
 
 const mouse = new THREE.Vector2();
 const raycaster = new THREE.Raycaster();
 let selectedU = null;
+let selectedLed = null;
 let selectedUList = [];
-renderer.domElement.addEventListener("mousemove", onMouseMove, false);
+renderer.domElement.addEventListener('mousemove', onMouseMove, false);
 function animatePosition(object, startZ, endZ, duration) {
   const startTime = performance.now();
 
@@ -271,7 +285,7 @@ function easeOutQuad(t) {
   return t * (2 - t);
 }
 
-renderer.domElement.addEventListener("dblclick", (event) => {
+renderer.domElement.addEventListener('dblclick', (event) => {
   if (selectedU) {
     const startZ = selectedU.position.z;
     const endZ = !selectedUList.includes(selectedU) ? startZ + 30 : startZ - 30;
@@ -285,11 +299,22 @@ renderer.domElement.addEventListener("dblclick", (event) => {
     }
   }
 });
+
+renderer.domElement.addEventListener('click', (event) => {
+  if (selectedLed) {
+    if (selectedLed.material.color.equals(new THREE.Color(1, 0, 0))) {
+      selectedLed.material.color.set('green'); // Chuyển sang màu xanh lá cây
+    } else {
+      selectedLed.material.color.set('red'); // Chuyển sang màu đỏ
+    }
+  }
+});
+
 function onMouseMove(event) {
   mouse.x = event.clientX;
   mouse.y = event.clientY;
-  tooltip.style.left = mouse.x + 20 + "px"; // Thêm một chút offset
-  tooltip.style.top = mouse.y + 20 + "px";
+  tooltip.style.left = mouse.x + 20 + 'px'; // Thêm một chút offset
+  tooltip.style.top = mouse.y + 20 + 'px';
 }
 
 function displayBox(event) {
@@ -299,13 +324,19 @@ function displayBox(event) {
   const info = getObjectInfo(event.object);
   tooltip.innerHTML = info;
   // Hiển thị tooltip
-  tooltip.style.display = "block";
-  selectedU = event.object;
+  tooltip.style.display = 'block';
+  if (event.object.name.includes('serverU')) {
+    selectedU = event.object;
+    selectedLed = null;
+  } else if (event.object.name.includes('led')) {
+    selectedLed = event.object;
+    selectedU = null;
+  }
 }
 
 function hideBox(event) {
   scene.remove(scene.children[scene.children.length - 1]);
-  tooltip.style.display = "none";
+  tooltip.style.display = 'none';
   selectedU = null;
 }
 
@@ -315,18 +346,18 @@ function getObjectInfo(object) {
   return `
   <strong>Id:</strong> ${object.id}<br><br>
   <strong>Name:</strong> ${object.name}<br><br>
-  <strong>Position:</strong> ${object.position.toArray().join(", ")}<br><br>
+  <strong>Position:</strong> ${object.position.toArray().join(', ')}<br><br>
   <strong>UUID:</strong> ${object.uuid}<br><br>
   <strong>Type:</strong> ${object.type}<br><br>
   <strong>Temperature:</strong> 80ºC<br><br>
 `;
 }
 
-dragControls.addEventListener("dragstart", disableOrbitControls);
-dragControls.addEventListener("dragend", enableOrbitControls);
-dragControls.addEventListener("drag", snapToRack);
-dragControls.addEventListener("hoveron", displayBox);
-dragControls.addEventListener("hoveroff", hideBox);
+dragControls.addEventListener('dragstart', disableOrbitControls);
+dragControls.addEventListener('dragend', enableOrbitControls);
+dragControls.addEventListener('drag', snapToRack);
+dragControls.addEventListener('hoveron', displayBox);
+dragControls.addEventListener('hoveroff', hideBox);
 
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -343,7 +374,7 @@ const gridHelper = new THREE.GridHelper(1000, 250);
 gridHelper.scale.set(2, 1, 1);
 scene.add(lightHelper, gridHelper);
 
-const spaceTexture = new THREE.TextureLoader().load("space.jpg");
+const spaceTexture = new THREE.TextureLoader().load('space.jpg');
 scene.background = spaceTexture;
 
 // const transformControls = new TransformControls(camera, renderer.domElement);

@@ -122,12 +122,14 @@ export default class Rack {
         ledMaterial = new THREE.MeshBasicMaterial({ color: 'red' });
       }
       const led = new THREE.Mesh(ledGeometry, ledMaterial);
+      led.name = 'led ' + (i + 1);
       // Đặt đèn LED lên mặt thứ 4 của hộp
       led.position.set(this.length / 2 - 20, 0, this.width / 2 + 1); // Đặt LED hơi ra ngoài để tránh bị che khuất bởi hộp
       serverU.add(led);
 
       serverU.position.y = (i + 1) * 15;
       serverU.name = 'serverU ' + (i + 1);
+
       rack.add(serverU);
     }
 
