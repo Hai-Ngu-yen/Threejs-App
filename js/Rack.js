@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import * as THREE from 'three';
 
 export default class Rack {
   constructor(length, width, number) {
@@ -24,7 +24,7 @@ export default class Rack {
 
     // Tạo các hình khối lập phương cho kệ sách
     const textureLoader = new THREE.TextureLoader();
-    const texture = textureLoader.load("ServerU.png");
+    const texture = textureLoader.load('ServerU.png');
     const materialsU = [
       new THREE.MeshBasicMaterial({ color: 0x1a1a1a }), // Mặt 0
       new THREE.MeshBasicMaterial({ color: 0x1a1a1a }), // Mặt 1
@@ -69,7 +69,7 @@ export default class Rack {
 
     // Đặt ma trận cho instance 2
     positionVector.set(0, this.height / 2, -this.width / 2);
-    const euler = new THREE.Euler(Math.PI / 2, Math.PI / 2, 0, "XYZ");
+    const euler = new THREE.Euler(Math.PI / 2, Math.PI / 2, 0, 'XYZ');
     const rotationMatrix2 = new THREE.Matrix4().makeRotationFromEuler(euler);
     matrix.compose(
       positionVector,
@@ -108,13 +108,26 @@ export default class Rack {
 
     // Cập nhật ma trận instance
     baseInstancedMesh.instanceMatrix.needsUpdate = true;
-    baseInstancedMesh.name = "rack";
+    baseInstancedMesh.name = 'rack';
     rack.add(baseInstancedMesh);
 
     for (let i = 0; i < this.number; i++) {
       const serverU = new THREE.Mesh(shelfGeometry, materialsU);
+      // Tạo đèn LED nhỏ
+      const ledGeometry = new THREE.CircleGeometry(1, 32);
+      let ledMaterial;
+      if (i % 2 === 0) {
+        ledMaterial = new THREE.MeshBasicMaterial({ color: 'green' });
+      } else {
+        ledMaterial = new THREE.MeshBasicMaterial({ color: 'red' });
+      }
+      const led = new THREE.Mesh(ledGeometry, ledMaterial);
+      // Đặt đèn LED lên mặt thứ 4 của hộp
+      led.position.set(this.length / 2 - 20, 0, this.width / 2 + 1); // Đặt LED hơi ra ngoài để tránh bị che khuất bởi hộp
+      serverU.add(led);
+
       serverU.position.y = (i + 1) * 15;
-      serverU.name = "serverU " + (i + 1);
+      serverU.name = 'serverU ' + (i + 1);
       rack.add(serverU);
     }
 
