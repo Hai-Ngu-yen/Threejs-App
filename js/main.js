@@ -301,6 +301,7 @@ renderer.domElement.addEventListener('dblclick', (event) => {
 });
 
 renderer.domElement.addEventListener('click', (event) => {
+  dragControls.activate();
   if (selectedLed) {
     if (selectedLed.material.color.equals(new THREE.Color(1, 0, 0))) {
       selectedLed.material.color.set('green'); // Chuyển sang màu xanh lá cây
@@ -325,12 +326,14 @@ function displayBox(event) {
   tooltip.innerHTML = info;
   // Hiển thị tooltip
   tooltip.style.display = 'block';
+  dragControls.activate();
   if (event.object.name.includes('serverU')) {
     selectedU = event.object;
     selectedLed = null;
   } else if (event.object.name.includes('led')) {
     selectedLed = event.object;
     selectedU = null;
+    dragControls.deactivate();
   }
 }
 
