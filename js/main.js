@@ -341,6 +341,7 @@ function hideBox(event) {
   scene.remove(scene.children[scene.children.length - 1]);
   tooltip.style.display = 'none';
   selectedU = null;
+  dragControls.activate();
 }
 
 function getObjectInfo(object) {
