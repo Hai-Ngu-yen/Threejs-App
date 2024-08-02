@@ -8,7 +8,7 @@ export default class Rack {
     this.number = number;
   }
 
-  createRack() {
+  create() {
     const rack = new THREE.Group();
 
     const blackMaterial = new THREE.MeshBasicMaterial({
@@ -108,7 +108,6 @@ export default class Rack {
 
     // Cập nhật ma trận instance
     baseInstancedMesh.instanceMatrix.needsUpdate = true;
-    baseInstancedMesh.name = 'rack';
     rack.add(baseInstancedMesh);
 
     for (let i = 0; i < this.number; i++) {

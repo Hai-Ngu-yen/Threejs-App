@@ -3,8 +3,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { DragControls } from 'three/examples/jsm/controls/DragControls.js';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
-// import Paint from "./paint.js";
+import Paint from './paint.js';
 import Rack from './Rack.js';
+import Conditioner from './Conditioner.js';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -25,8 +26,8 @@ const tooltip = document.getElementById('tooltip');
 const deleteButton = document.getElementById('deleteButton');
 
 clearButton.addEventListener('click', clearPlanes);
-// endButton.addEventListener("click", drawPlane);
-// moveButton.addEventListener("click", moveObjects);
+endButton.addEventListener('click', drawPlane);
+moveButton.addEventListener('click', moveObjects);
 addButton.addEventListener('click', addRacks);
 deleteButton.addEventListener('click', deleteServerU);
 
@@ -93,61 +94,66 @@ function clearPlanes() {
   dragControls.addEventListener('hoveroff', hideBox);
 }
 
-// function drawPlane() {
-//   points = Paint();
-//   const extrudeSettings = {
-//     steps: 1,
-//     depth: 70,
-//     bevelEnabled: false,
-//   };
-//   for (let j = 0; j < points.length; j++) {
-//     for (let i = 0; i < points[j].length - 1; i++) {
-//       const shape = new THREE.Shape();
+function drawPlane() {
+  points = Paint();
+  const extrudeSettings = {
+    steps: 1,
+    depth: 200,
+    bevelEnabled: false,
+  };
+  for (let j = 0; j < points.length; j++) {
+    for (let i = 0; i < points[j].length - 1; i++) {
+      const shape = new THREE.Shape();
 
-//       shape.moveTo((points[j][i].x - 500) / 2, (points[j][i].y - 250) / 2);
-//       shape.lineTo(
-//         (points[j][i + 1].x - 500) / 2,
-//         (points[j][i + 1].y - 250) / 2
-//       );
+      shape.moveTo(points[j][i].x - 500, points[j][i].y - 250);
+      shape.lineTo(points[j][i + 1].x - 500, points[j][i + 1].y - 250);
 
-//       const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-//       // const material = new THREE.MeshBasicMaterial({
-//       //   color: 0x00ff00,
-//       // });
-//       // const mesh = new THREE.Mesh(geometry, material);
-//       const edges3 = new THREE.EdgesGeometry(geometry);
-//       const line3 = new THREE.LineSegments(
-//         edges3,
-//         new THREE.LineBasicMaterial({ color: 0xffffff })
-//       );
-//       line3.rotateX(THREE.Math.degToRad(90));
-//       line3.position.y = 70;
-//       // objects.push(line3);
-//       drawedPlanes.push(line3);
-//       scene.add(line3);
-//     }
-//   }
-// }
+      const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+      // const material = new THREE.MeshBasicMaterial({
+      //   color: 0x00ff00,
+      // });
+      // const mesh = new THREE.Mesh(geometry, material);
+      const edges3 = new THREE.EdgesGeometry(geometry);
+      const line3 = new THREE.LineSegments(
+        edges3,
+        new THREE.LineBasicMaterial({ color: 0xffffff })
+      );
+      line3.rotateX(THREE.Math.degToRad(90));
+      line3.position.y = 200;
+      // objects.push(line3);
+      drawedPlanes.push(line3);
+      scene.add(line3);
+    }
+  }
+}
 
-// function moveObjects() {
-//   movable = !movable;
-//   transformControls.showX = movable;
-//   transformControls.showY = movable;
-//   transformControls.showZ = movable;
-// }
+function moveObjects() {
+  movable = !movable;
+  transformControls.showX = movable;
+  transformControls.showY = movable;
+  transformControls.showZ = movable;
+  if (movable) {
+    dragControls.deactivate();
+  } else {
+    dragControls.activate();
+  }
+}
 
 let tmpPositionX = -100;
 // let tmpPositionZ = -10;
 let draggableServerU = [];
 let racks = [];
 let snapPostions = [];
+let number = 1;
 function addRacks() {
   const rackMesh = new Rack(
     document.getElementById('length').value,
     document.getElementById('width').value,
     document.getElementById('number').value
   );
-  const rackTmp = rackMesh.createRack();
+  const rackTmp = rackMesh.create();
+  rackTmp.name = 'rack ' + number;
+  number += 1;
   rackTmp.position.x = tmpPositionX;
   // rackTmp.position.z = tmpPositionZ;
   tmpPositionX -= document.getElementById('length').value * 2;
@@ -173,9 +179,9 @@ function addRacks() {
   // );
   // dragControls2.transformGroup = true;
 
-  // dragControls2.addEventListener("hoveron", function (event) {
+  // dragControls.addEventListener('hoveron', function (event) {
   //   transformControls.attach(rackTmp);
-  //   if (event.object.name == "serverU") {
+  //   if (event.object.name == 'serverU') {
   //     dragControls2.enabled = true;
   //     dragControls2.transformGroup = false;
   //   } else {
@@ -221,7 +227,13 @@ function deleteServerU() {
     const servers = rack.children;
     for (const server of servers) {
       if (server.name == serverUName) {
+        const index = draggableServerU.indexOf(server);
+        if (index > -1) {
+          // only splice array when item is found
+          draggableServerU.splice(index, 1); // 2nd parameter means remove one item only
+        }
         rack.remove(server);
+        scene.remove(server);
       }
     }
   }
@@ -316,7 +328,7 @@ function onMouseMove(event) {
   mouse.x = event.clientX;
   mouse.y = event.clientY;
   tooltip.style.left = mouse.x + 20 + 'px'; // Thêm một chút offset
-  tooltip.style.top = mouse.y + 20 + 'px';
+  tooltip.style.top = mouse.y + 20 + 400 + 'px';
 }
 
 function displayBox(event) {
@@ -336,12 +348,16 @@ function displayBox(event) {
     selectedU = null;
     dragControls.enabled = false;
   }
+  if (event.object.parent.name.includes('rack')) {
+    transformControls.attach(event.object.parent);
+  }
 }
 
 function hideBox() {
   scene.remove(scene.children[scene.children.length - 1]);
   tooltip.style.display = 'none';
   selectedU = null;
+  transformControls.attach(airConditioner);
 }
 
 function getObjectInfo(object) {
@@ -364,6 +380,7 @@ dragControls.addEventListener('hoveron', displayBox);
 dragControls.addEventListener('hoveroff', hideBox);
 
 renderer.setPixelRatio(window.devicePixelRatio);
+// renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setSize(window.innerWidth, window.innerHeight);
 camera.position.set(0, 100, 100);
 
@@ -381,30 +398,46 @@ scene.add(lightHelper, gridHelper);
 const spaceTexture = new THREE.TextureLoader().load('space.jpg');
 scene.background = spaceTexture;
 
-// const transformControls = new TransformControls(camera, renderer.domElement);
+const transformControls = new TransformControls(camera, renderer.domElement);
+scene.add(transformControls);
 
-// scene.add(transformControls);
+transformControls.addEventListener('dragging-changed', function (event) {
+  orbitControls.enabled = !event.value;
+});
 
-// transformControls.addEventListener("dragging-changed", function (event) {
-//   orbitControls.enabled = !event.value;
-// });
+window.addEventListener('keydown', function (event) {
+  switch (event.key) {
+    case 't':
+      transformControls.setMode('translate');
+      break;
+    case 'r':
+      transformControls.setMode('rotate');
+      break;
+    case 's':
+      transformControls.setMode('scale');
+      break;
+    case 'Meta':
+      moveObjects();
+      break;
+  }
+});
 
-// transformControls.showX = false;
-// transformControls.showY = false;
-// transformControls.showZ = false;
+transformControls.showX = false;
+transformControls.showY = false;
+transformControls.showZ = false;
 
 function animate() {
   requestAnimationFrame(animate);
-  // for (const rack of racks) {
-  //   rack.children.forEach((child) => {
-  //     if (child.name.includes("serverU")) {
-  //       child.position.clamp(
-  //         new THREE.Vector3(-1000, 0, 0),
-  //         new THREE.Vector3(1000, 1000, 0)
-  //       );
-  //     }
-  //   });
-  // }
+  for (const rack of racks) {
+    rack.children.forEach((child) => {
+      if (child.name.includes('serverU')) {
+        child.position.clamp(
+          new THREE.Vector3(-1000, 0, 0),
+          new THREE.Vector3(1000, 1000, 0)
+        );
+      }
+    });
+  }
   renderer.render(scene, camera);
 }
 
@@ -414,7 +447,7 @@ function animate() {
 // let positionZ = 200;
 // for (let i = 1; i <= 20; i++) {
 //   let rackMesh = new Rack(70, 50, 10);
-//   let rackTmp = rackMesh.createRack();
+//   let rackTmp = rackMesh.create();
 //   rackTmp.position.x = positionX;
 //   rackTmp.position.z = positionZ;
 //   positionZ -= 100;
@@ -424,5 +457,11 @@ function animate() {
 //     positionZ = 200;
 //   }
 // }
+const airConditionerMesh = new Conditioner(80, 40, 20);
+const airConditioner = airConditionerMesh.create();
+airConditioner.position.y = 20;
+airConditioner.name = 'Air Conditioner';
+transformControls.attach(airConditioner);
+scene.add(airConditioner);
 
 animate();
